@@ -50,6 +50,7 @@ interface Props extends UpdateProps {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
+	edit: Boolean
 }
 interface UpdateProps {
 	allStations: UrlStr[]
@@ -67,8 +68,8 @@ export default class InitMap {
 	private appEPSGCode: EpsgCode;
 	private mapOptions: MapOptionsExpanded;
 	private popup: Popup;
-	private readonly layerControl: LayerControl;
-	private readonly stationFilterControl: StationFilterControl;
+	private readonly layerControl: LayerControl | undefined;
+	private readonly stationFilterControl: StationFilterControl | undefined;
 	private allStations: UrlStr[]
 	private selectedStations: UrlStr[]
 	private stationPosLookup: StationPosLookup
@@ -91,18 +92,19 @@ export default class InitMap {
 		this.appEPSGCode = `EPSG:${srid}` as EpsgCode;
 		const projection = getProjection(this.appEPSGCode) ?? throwError(`Projection ${this.appEPSGCode} not found`);
 
-		this.mapOptions = {
-			center: persistedMapProps.center,
-			zoom: persistedMapProps.zoom,
-			fitView: persistedMapProps.center === undefined && persistedMapProps.zoom === undefined,
-			hitTolerance: 5
-		};
+			this.mapOptions = props.edit && {
+				center: persistedMapProps.center,
+				zoom: persistedMapProps.zoom,
+				fitView: persistedMapProps.center === undefined && persistedMapProps.zoom === undefined,
+				// fitView: true,
+				hitTolerance: 5
+			};
 
 		const selectedBaseMap = persistedMapProps.baseMap ?? olMapSettings.defaultBaseMap;
 		const tileLayers = getBaseMapLayers(selectedBaseMap, olMapSettings.baseMapFilter);
 		this.popup = new Popup('popover');
 
-		const controls: Control[] = getDefaultControls(projection);
+		let controls: Control[] = []
 
 		const pointTransformer = getTransformPointFn("EPSG:4326", this.appEPSGCode)
 		this.getStationPosLookup = () => this.allStations.reduce<StationPosLookup>(
@@ -119,29 +121,33 @@ export default class InitMap {
 
 		this.stationPosLookup = this.getStationPosLookup()
 
-		this.stationFilterControl = new StationFilterControl({
-			element: document.getElementById('stationFilterCtrl') ?? undefined,
-			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
-			updatePersistedMapProps
-		});
-		controls.push(this.stationFilterControl);
+		if (props.edit) {
+			controls = getDefaultControls(projection);
 
-		this.layerControl = new LayerControl({
-			element: document.getElementById('layerCtrl') ?? undefined,
-			selectedBaseMap,
-			updateCtrl: this.updateLayerCtrl
-		});
-		this.layerControl.on('change', e => {
-			const layerCtrl = e.target as LayerControl;
-			updatePersistedMapProps({
-				baseMap: layerCtrl.selectedBaseMap,
-				visibleToggles: layerCtrl.visibleToggleLayerIds
+			this.stationFilterControl = new StationFilterControl({
+				element: document.getElementById('stationFilterCtrl') ?? undefined,
+				isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
+				updatePersistedMapProps
 			});
-		});
-		controls.push(this.layerControl);
+			controls.push(this.stationFilterControl);
 
-		if (Object.keys(olMapSettings.sridsInMap).length > 1)
-			controls.push(this.createProjectionControl(persistedMapProps, props.updateMapSelectedSRID));
+			this.layerControl = new LayerControl({
+				element: document.getElementById('layerCtrl') ?? undefined,
+				selectedBaseMap,
+				updateCtrl: this.updateLayerCtrl
+			});
+			this.layerControl.on('change', e => {
+				const layerCtrl = e.target as LayerControl;
+				updatePersistedMapProps({
+					baseMap: layerCtrl.selectedBaseMap,
+					visibleToggles: layerCtrl.visibleToggleLayerIds
+				});
+			});
+			controls.push(this.layerControl);
+		}
+
+		// if (Object.keys(olMapSettings.sridsInMap).length > 1)
+		// 	controls.push(this.createProjectionControl(persistedMapProps, props.updateMapSelectedSRID));
 
 		const olProps = {
 			mapRootElement,
@@ -149,26 +155,32 @@ export default class InitMap {
 			tileLayers,
 			mapOptions: this.mapOptions,
 			popupTemplate: this.popup,
-			controls
+			controls,
+			interactions: new Collection()
 		};
 
 		// Create map component in OLWrapper. Anything that uses map must be handled after map creation
 		this.olWrapper = new OLWrapper(olProps);
-		this.addInteractivity();
 
-		this.olWrapper.map.on("moveend", e => {
-			const map = e.target as Map;
-			const view = map.getView();
-			updatePersistedMapProps({ center: view.getCenter(), zoom: view.getZoom() });
-		});
+		if (props.edit) {
+			this.addInteractivity();
+
+			this.olWrapper.map.on("moveend", e => {
+				const map = e.target as Map;
+				const view = map.getView();
+				updatePersistedMapProps({ center: view.getCenter(), zoom: view.getZoom() });
+			});
+		}
 
 		const minWidth = 600;
 		const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
 		if (width < minWidth) return;
 
-		getESRICopyRight(esriBaseMapNames).then(attributions => {
-			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
-		});
+		if (props.edit) {
+			getESRICopyRight(esriBaseMapNames).then(attributions => {
+				this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
+			});
+		}
 
 		this.updatePoints(props.mapProps)
 	}
@@ -246,8 +258,8 @@ export default class InitMap {
 		});
 
 		this.olWrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
-		this.layerControl.updateCtrl();
-		this.stationFilterControl.reDrawFeaturesFromMapProps(mapProps)
+		this.layerControl?.updateCtrl();
+		this.stationFilterControl?.reDrawFeaturesFromMapProps(mapProps)
 	}
 
 	getLayerWrapper({id, label, layerType, geoType, data, style, zIndex, interactive}: Omit<LayerWrapperArgs, 'visible'>): LayerWrapper {

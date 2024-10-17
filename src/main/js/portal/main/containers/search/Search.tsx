@@ -12,7 +12,6 @@ import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
-import SearchResultMap from './SearchResultMap';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
@@ -88,7 +87,7 @@ class Search extends Component<OurProps, OurState> {
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
 		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
-		this.persistedMapProps = { 
+		this.persistedMapProps = {
 			isStationFilterCtrlActive,
 			baseMap,
 			visibleToggles,
@@ -144,13 +143,6 @@ class Search extends Component<OurProps, OurState> {
 						<SearchResultCompact
 							tabHeader="Compact view"
 							handlePreview={this.handlePreview.bind(this)}
-						/>
-						<SearchResultMap
-							key={srid}
-							tabHeader="Stations map"
-							persistedMapProps={this.persistedMapProps}
-							updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
-							updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
 						/>
 					</Tabs>
 				</div>

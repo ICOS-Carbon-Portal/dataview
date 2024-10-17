@@ -8,12 +8,17 @@ import {
 	setNumberFilter,
 	setFilterTemporal,
 	specFilterUpdate,
-	setKeywordFilter
+	setKeywordFilter,
+	setMapProps
 } from "../../actions/search";
 import {PanelsWithFilters} from "../../components/filters/PanelsWithFilters";
 import {FilterNumber} from "../../models/FilterNumbers";
 import FilterTemporal from "../../models/FilterTemporal";
-
+import MapFilter from '../../components/filters/MapFilter';
+import { PersistedMapPropsExtended } from '../../models/InitMap';
+import { getPersistedMapProps } from '../../backend';
+import config from '../../config';
+import { SupportedSRIDs } from 'icos-cp-ol';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -24,12 +29,45 @@ type incommingProps = {
 type OurProps = StateProps & DispatchProps & incommingProps;
 
 class Filters extends Component<OurProps> {
+	private persistedMapProps: PersistedMapPropsExtended;
+
+	constructor(props: OurProps) {
+		super(props);
+
+		this.persistedMapProps = getPersistedMapProps() ?? {
+			baseMap: config.olMapSettings.defaultBaseMap,
+			srid: config.olMapSettings.defaultSRID
+		};
+
+		this.state = {
+			srid: this.persistedMapProps.srid
+		};
+	}
+
+	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
+		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
+		this.props.setMapProps(this.persistedMapProps);
+	}
+
+	updateMapSelectedSRID(srid: SupportedSRIDs) {
+		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
+		this.persistedMapProps = {
+			isStationFilterCtrlActive,
+			baseMap,
+			visibleToggles,
+			srid
+		};
+		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
+		this.setState({ srid });
+	}
+
 	render(){
 		const {
 			specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset,
 			setFilterTemporal, filterPids, setNumberFilter, filterNumbers, keywords, filterKeywords,
-			setKeywordFilter, countryCodesLookup, spatialRects
+			setKeywordFilter, countryCodesLookup, spatialRects, srid
 		} = this.props;
+
 
 		const resetBtnEnabled = filterTemporal.hasFilter
 			|| specTable.hasActiveFilters
@@ -41,6 +79,14 @@ class Filters extends Component<OurProps> {
 		return (
 			<div>
 				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={handleFilterReset} />
+
+				<MapFilter
+					key={srid}
+					tabHeader="Stations map"
+					persistedMapProps={this.persistedMapProps}
+					updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
+					updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
+				/>
 
 				<PanelsWithFilters
 					filterNumbers={filterNumbers}
@@ -97,7 +143,8 @@ function stateToProps(state: State){
 		keywords: state.keywords,
 		filterKeywords: state.filterKeywords,
 		filterPids: state.filterPids,
-		spatialRects: state.mapProps.rects
+		spatialRects: state.mapProps.rects,
+		srid: state.mapProps.srid
 	};
 }
 
@@ -107,6 +154,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 		setFilterTemporal: (filterTemporal: FilterTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		setNumberFilter: (numberFilter: FilterNumber) => dispatch(setNumberFilter(numberFilter)),
 		setKeywordFilter: (filterKeywords: string[]) => dispatch(setKeywordFilter(filterKeywords)),
+		setMapProps: (mapProps: PersistedMapPropsExtended) => dispatch(setMapProps(mapProps)),
 	};
 }
 
