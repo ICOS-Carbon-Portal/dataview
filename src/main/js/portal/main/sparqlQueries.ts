@@ -73,17 +73,34 @@ where{
 	return { text };
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
-	const siteQueries = config.envri === "SITES"
-		? `BIND (COALESCE(?site, <http://dummy>) as ?boundSite)
-	OPTIONAL {?boundSite cpmeta:hasEcosystemType ?ecosystem}
-	OPTIONAL {?boundSite cpmeta:hasSpatialCoverage ?location}`
-		: `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
-	OPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}
-	OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}
-	OPTIONAL {?boundStation cpmeta:hasStationClass ?stClassOpt}`;
+	let siteQueries: string
+	switch(config.envri){
+		case "SITES":
+			siteQueries = `BIND (COALESCE(?site, <http://dummy>) as ?boundSite)
+				OPTIONAL {?boundSite cpmeta:hasEcosystemType ?ecosystem}
+				OPTIONAL {?boundSite cpmeta:hasSpatialCoverage ?location}`
+			break
+		case "ICOS":
+			siteQueries = `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
+				OPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}
+				OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}
+				OPTIONAL {?boundStation cpmeta:hasStationClass ?stClassOpt}
+				BIND (IF(
+					bound(?stClassOpt),
+					IF(strstarts(?stClassOpt, "Ass"), "Associated", "ICOS"),
+					IF(bound(?station), "Other", ?stClassOpt)
+				) as ?stationclass)`
+			break
+		case "ICOSCities":
+			siteQueries = `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
+				OPTIONAL {?boundStation cpmeta:belongsToNetwork ?stationNetwork}
+				OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}`
+			break
+
+	}
 
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
@@ -106,11 +123,6 @@ where{
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	${siteQueries}
-	BIND (IF(
-		bound(?stClassOpt),
-		IF(strstarts(?stClassOpt, "Ass"), "Associated", "ICOS"),
-		IF(bound(?station), "Other", ?stClassOpt)
-	) as ?stationclass)
 	}`;
 
 	return { text };

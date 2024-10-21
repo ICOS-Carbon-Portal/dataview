@@ -65,7 +65,8 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 		site: b.site?.value,
 		ecosystem: b.ecosystem?.value,
 		location: b.location?.value,
-		stationclass: b.stationclass?.value
+		stationclass: b.stationclass?.value,
+		stationNetwork: b.stationNetwork?.value
 	}));
 };
 

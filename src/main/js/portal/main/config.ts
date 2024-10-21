@@ -199,6 +199,7 @@ const defaultCategNames = {
 	submitter: 'Data submitter',
 	station: 'Station of origin',
 	stationclass: 'Station class',
+	stationNetwork: 'Station network',
 	project: 'Project',
 	ecosystem: 'Ecosystem type',
 	location: 'Location'
@@ -301,7 +302,7 @@ export const filters: IFilterCategories = {
 		{panelTitle: "Submission date", filterList: ['submission']},
 	],
 	ICOSCities: [
-		{ panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'stationclass', 'ecosystem', 'countryCode', 'submitter', 'samplingHeight'] },
+		{ panelTitle: "Data origin", filterList: ['theme', 'station', 'stationNetwork', 'countryCode', 'submitter', 'samplingHeight'] },
 		{ panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format'] },
 		{ panelTitle: "Value types", filterList: ['valType', 'variable', 'quantityUnit', 'quantityKind'] },
 		{ panelTitle: "Sampling date", filterList: ['dataTime'] },
