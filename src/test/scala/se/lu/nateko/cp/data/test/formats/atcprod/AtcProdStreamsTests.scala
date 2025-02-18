@@ -15,6 +15,7 @@ import se.lu.nateko.cp.data.formats.*
 import se.lu.nateko.cp.data.formats.ValueFormat.*
 import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams.*
 import se.lu.nateko.cp.data.formats.bintable.*
+import java.net.URI
 
 class AtcProdStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
@@ -28,11 +29,13 @@ class AtcProdStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 
+	val dummyURI = URI("https://meta.icos-cp.eu")
+
 	val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
-			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false),
-			PlainColumn(FloatValue, "co2", isOptional = false),
-			PlainColumn(FloatValue, "Stdev", isOptional = false)
+			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "co2", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "Stdev", isOptional = false, dummyURI, None)
 		)),
 		"TIMESTAMP"
 	)

@@ -14,6 +14,7 @@ import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
+import java.net.URI
 
 class EcoCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
@@ -28,17 +29,19 @@ class EcoCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 	val nRows = 48
 
+	val dummyURI = URI("https://meta.icos-cp.eu")
+
 	val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
-			PlainColumn(EtcDate, "date", isOptional = false),
-			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false),
-			PlainColumn(Iso8601TimeOfDay, "time", isOptional = false),
-			PlainColumn(FloatValue, "H_1_1_1", isOptional = false),
-			PlainColumn(FloatValue, "H_f_1_1_1", isOptional = false),
-			PlainColumn(FloatValue, "Fc_1_1_1", isOptional = false),
-			PlainColumn(FloatValue, "LE_1_1_1", isOptional = false),
-			PlainColumn(FloatValue, "NEE_1_1_1", isOptional = false),
-			PlainColumn(FloatValue, "Ustar_1_1_1", isOptional = false),
+			PlainColumn(EtcDate, "date", isOptional = false, dummyURI, None),
+			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false, dummyURI, None),
+			PlainColumn(Iso8601TimeOfDay, "time", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "H_1_1_1", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "H_f_1_1_1", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "Fc_1_1_1", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "LE_1_1_1", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "NEE_1_1_1", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "Ustar_1_1_1", isOptional = false, dummyURI, None),
 		)),
 	"TIMESTAMP"
 	)

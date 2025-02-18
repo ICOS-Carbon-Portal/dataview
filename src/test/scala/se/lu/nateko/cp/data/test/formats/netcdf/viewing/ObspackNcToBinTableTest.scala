@@ -20,6 +20,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
+import java.net.URI
 
 class ObspackNcToBinTableTest extends AsyncFunSpec {
 
@@ -65,14 +66,15 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 	val TimestampIndex = 1
 	val LatIndex = 2
 	val LonIndex = 3
+	val dummyURI = URI("https://meta.icos-cp.eu")
 
 	describe("Read values from first file") {
 
 		val columnsMeta = new ColumnsMeta(Seq(
-			PlainColumn(FloatValue, "value", false),
-			PlainColumn(Iso8601DateTime, "time", false),
-			PlainColumn(FloatValue, "latitude", false),
-			PlainColumn(FloatValue, "longitude", false)
+			PlainColumn(FloatValue, "value", false, dummyURI, None),
+			PlainColumn(Iso8601DateTime, "time", false, dummyURI, None),
+			PlainColumn(FloatValue, "latitude", false, dummyURI, None),
+			PlainColumn(FloatValue, "longitude", false, dummyURI, None)
 		))
 
 		val path = Path.of(getClass.getResource("/co2_con_aircraft-insitu_42_allvalid_small.nc").getPath)
@@ -99,8 +101,8 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 	describe("Read values from second file") {
 
 		val columnsMeta = new ColumnsMeta(Seq(
-			PlainColumn(FloatValue, "value", false),
-			PlainColumn(Iso8601DateTime, "time", false)
+			PlainColumn(FloatValue, "value", false, dummyURI, None),
+			PlainColumn(Iso8601DateTime, "time", false, dummyURI, None)
 		))
 
 		val path = Path.of(getClass.getResource("/co2_ssl_tower-insitu_23_allvalid-12magl_small.nc").getPath)
@@ -121,8 +123,8 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 
 	describe("Read qc flag from third file") {
 		val columnsMeta = new ColumnsMeta(Seq(
-			PlainColumn(Iso8601DateTime, "time", false),
-			PlainColumn(Utf16CharValue, "qc_flag", false)
+			PlainColumn(Iso8601DateTime, "time", false, dummyURI, None),
+			PlainColumn(Utf16CharValue, "qc_flag", false, dummyURI, None)
 		))
 
 		val path = Path.of(getClass.getResource("/co2_htm_tower-insitu_424_allvalid-150magl_small.nc").getPath)

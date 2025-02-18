@@ -53,6 +53,11 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val ccby4 = getRelative("icosLicence")
 }
 
+object CpMetaResourcesVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/resources/cpmeta/")) {
+	val longitudeValType = getRelative("longitude")
+	val latitudeValType = getRelative("latitude")
+}
+
 object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {
 
 	val sitesDelimitedHeaderCsvTimeSer = getRelative("delimitedHeaderCsv")

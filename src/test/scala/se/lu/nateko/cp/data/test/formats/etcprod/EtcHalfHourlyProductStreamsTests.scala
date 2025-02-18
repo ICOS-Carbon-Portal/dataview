@@ -15,6 +15,7 @@ import se.lu.nateko.cp.data.formats.etcprod.EtcHalfHourlyProductStreams
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
+import java.net.URI
 
 class EtcHalfHourlyProductStreamsTests extends AnyFunSuite with BeforeAndAfterAll {
 
@@ -31,11 +32,13 @@ class EtcHalfHourlyProductStreamsTests extends AnyFunSuite with BeforeAndAfterAl
 		overwrite = true
 	)
 
+	val dummyURI = URI("https://meta.icos-cp.eu")
+
 	private val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
-			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false),
-			PlainColumn(FloatValue, "TA_ERA", isOptional = false),
-			PlainColumn(FloatValue, "TA_F", isOptional = false)
+			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "TA_ERA", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "TA_F", isOptional = false, dummyURI, None)
 		)),
 		"TIMESTAMP"
 	)

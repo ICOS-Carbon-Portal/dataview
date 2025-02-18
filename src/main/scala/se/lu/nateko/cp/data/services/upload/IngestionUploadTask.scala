@@ -181,31 +181,46 @@ object IngestionUploadTask{
 	def getColumnFormats(objSpec: URI, sparql: SparqlClient)(implicit ctxt: ExecutionContext): Future[ColumnsMeta] = {
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-		|select ?colName ?valFormat ?isRegex ?isOptional where{
+		|select ?colTitle ?valFormat ?valueType ?isRegex ?isOptional ?flagColTitle where{
 		|	<$objSpec> cpmeta:containsDataset ?dataSet .
 		|	?dataSet cpmeta:hasColumn ?column .
-		|	?column cpmeta:hasColumnTitle ?colName .
+		|	?column cpmeta:hasColumnTitle ?colTitle .
 		|	?column cpmeta:hasValueFormat ?valFormat .
+		|	?column cpmeta:hasValueType ?valueType .
+		|	OPTIONAL{
+		|		?flagCol cpmeta:isQualityFlagFor ?column .
+		|		?dataSet cpmeta:hasColumn ?flagCol .
+		|		?flagCol cpmeta:hasColumnTitle ?flagColTitle .
+		|		OPTIONAL{?flagCol cpmeta:isRegexColumn ?flagIsRegex}
+		|		FILTER(!coalesce(?flagIsRegex, "false"^^xsd:boolean))
+		|	}
 		|	OPTIONAL{?column cpmeta:isRegexColumn ?isRegex}
 		|	OPTIONAL{?column cpmeta:isOptionalColumn ?isOptional}
 		|}""".stripMargin
 
 		sparql.select(query).map{ssr =>
 			val colMetas = ssr.results.bindings.flatMap{binding =>
-				val colNameOpt = binding.get("colName").collect{case BoundLiteral(col, _) => col}
+				val colNameOpt = binding.get("colTitle").collect{case BoundLiteral(col, _) => col}
 				val valFormatOpt = binding.get("valFormat").collect{
 					case BoundUri(format) => ValueFormat.fromUri(format)
 				}
+				val valTypeOpt = binding.get("valueType").collect:
+					case BoundUri(valType) => valType
+
 				def getBoolean(varName: String): Boolean = binding.get(varName).collect{
 					case BoundLiteral(bool, _) if bool.toLowerCase == "true" => true
 					case _ => false
 				}.getOrElse(false)
+
 				val isRegex = getBoolean("isRegex")
 				val isOptional = getBoolean("isOptional")
 
-				for(colName <- colNameOpt; valFormat <- valFormatOpt) yield{
-					if(isRegex) RegexColumn(valFormat, colName.r, isOptional)
-					else PlainColumn(valFormat, colName, isOptional)
+				val flagColTitleOpt = binding.get("flagColTitle").collect:
+					case BoundLiteral(flagColTitle, _) => flagColTitle
+
+				for(colName <- colNameOpt; valFormat <- valFormatOpt; valType <- valTypeOpt) yield{
+					if(isRegex) RegexColumn(valFormat, colName.r, isOptional, valType, flagColTitleOpt)
+					else PlainColumn(valFormat, colName, isOptional, valType, flagColTitleOpt)
 				}
 			}
 			new ColumnsMeta(colMetas)

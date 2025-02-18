@@ -14,6 +14,7 @@ import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDelimitedHeaderCsvSt
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
+import java.net.URI
 
 class SitesDailyDelimitedHeaderCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll {
 
@@ -31,12 +32,14 @@ class SitesDailyDelimitedHeaderCsvStreamsTests extends AnyFunSuite with BeforeAn
 		overwrite = true
 	)
 
+	val dummyURI = URI("https://meta.icos-cp.eu")
+
 	private val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
-			PlainColumn(Iso8601Date, "TIMESTAMP", isOptional = false),
-			PlainColumn(FloatValue, "SR_IN", isOptional = false),
-			PlainColumn(FloatValue, "PPFD", isOptional = false),
-			PlainColumn(FloatValue, "TA", isOptional = true)
+			PlainColumn(Iso8601Date, "TIMESTAMP", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "SR_IN", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "PPFD", isOptional = false, dummyURI, None),
+			PlainColumn(FloatValue, "TA", isOptional = true, dummyURI, None)
 		)),
 		"TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES"
 	)
